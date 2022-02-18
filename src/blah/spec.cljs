@@ -1,7 +1,7 @@
 (ns ^:no-doc blah.spec
   (:require [cljs.core.async.impl.protocols :as async.proto]
             [cljs.spec.alpha :as s]
-            [blah.impl :as impl]))    
+            [blah.impl :as impl]))
 
 (s/def ::device-id string?)
 

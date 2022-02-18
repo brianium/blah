@@ -2,5 +2,8 @@
  :deps  {org.clojure/clojurescript {:mvn/version "1.10.758"}
          org.clojure/core.async  {:mvn/version "1.5.648"}}
  :aliases
- {:dev {:extra-paths ["dev"]
-        :extra-deps  {integrant/integrant {:mvn/version "0.8.0"}}}}}
+ {:dev    {:extra-paths ["dev"]
+           :extra-deps  {integrant/integrant {:mvn/version "0.8.0"}}}
+  
+  :format {:extra-deps {cljfmt/cljfmt {:mvn/version "0.8.0"}}
+           :main-opts  ["-m" "cljfmt.main"]}}}

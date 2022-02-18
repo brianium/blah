@@ -175,22 +175,22 @@
 (defrecord Session [data-ch context]
   async.proto/ReadPort
   (take!
-   [_ fn-1handler]
-   (async.proto/take! data-ch fn-1handler))
-  
+    [_ fn-1handler]
+    (async.proto/take! data-ch fn-1handler))
+
   async.proto/Channel
   (close!
-   [_]
-   (async.proto/close! data-ch))
-  
+    [_]
+    (async.proto/close! data-ch))
+
   (closed?
-   [_]
-   (async.proto/closed? data-ch))
-  
+    [_]
+    (async.proto/closed? data-ch))
+
   AudioContext
   (audio-context
-   [_]
-   context))
+    [_]
+    context))
 
 (defn create-session
   "A session behaves like a core.async ReadPort. The only difference

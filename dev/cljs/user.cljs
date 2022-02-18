@@ -96,7 +96,7 @@
           (create-buffer frames)
           (record-frames frames)
           (play-recording context))
-      
+
       ;;; Reset handler state
       (swap! state assoc :frames []))))
 
@@ -155,7 +155,7 @@
 (defmethod ig/init-key :ui/listeners [_ {:keys [controls listen state] :handler/keys [data stop]}]
   (let [{:button/keys [start] :select/keys [inputs]} controls
         stop-button                                  (:button/stop controls)]
-    
+
     ;;; Clicking yon start button commences a microphone jam
     (gevents/listen
      start
@@ -165,7 +165,7 @@
        (enable-elements stop-button)
        (let [session (listen)
              context (blah/audio-context session)]
-         
+
          ;;; Clicking yon stop button ends the microphone jams and calls the stop handler
          (gevents/listenOnce
           stop-button
@@ -174,14 +174,14 @@
             (stop context session)
             (enable-elements inputs start)
             (disable-elements stop-button)))
-         
+
          ;;; Let's gather microphone jams as they arrive, passing them to the data handler
          (a/go-loop []
            (let [audio-data (a/<! session)]
              (when audio-data
                (data audio-data)
                (recur)))))))
-    
+
     ;;; Supports selecting which audio input to gather the jams on
     (gevents/listen inputs EventType.CHANGE #(swap! state assoc :input (.. % -target -value)))))
 
