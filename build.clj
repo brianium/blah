@@ -19,12 +19,12 @@
                 :lib lib
                 :version version
                 :basis basis
-                :src-dirs ["src/cljs"]
+                :src-dirs ["src"]
                 :scm {:url                 "https://github.com/brianium/blah"
                       :connection          "scm:git:git://github.com/brianium/blah.git"
                       :developerConnection "scm:git:git://github.com/brianium/blah.git"
                       :tag                 "HEAD"}})
-  (b/copy-dir {:src-dirs ["src/cljs"]
+  (b/copy-dir {:src-dirs ["src"]
                :target-dir class-dir})
   (b/jar {:class-dir class-dir
           :jar-file jar-file}))
