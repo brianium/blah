@@ -1,5 +1,26 @@
-(ns blah.impl
-  (:require [cljs.core.async :refer [chan put! go <! >! close!]]
+(ns ^:no-doc blah.impl
+  "The implementation details of blah can be broken down into four concepts:
+   
+   1. Inputs
+   2. Streams
+   3. Transports
+   4. Sessions
+   
+   They feed into one another: Input -> Stream -> Transport -> Session
+   
+   Inputs are audio inputs specifically. In the land of JavaScript they are represented as \"devices\" returned
+   by navigator.mediaDevices.enumerarteDevices()
+   
+   Streams represent a js MediaStream that is the result of asking a user for permission to gather audio on an Input.
+   
+   Transports are mechanisms for doing something with the underlying MediaStream. It facilitates getting audio data out of
+   a Stream and into a usable format. For now this is backed by an audio worklet that transports audio data over a port via postMessage(),
+   but it could also support something like the MediaStream Recording API if realtime access to audio data isn't a concern.
+   
+   Finally, Sessions are used to glue all these concepts into a single point. It represents the act of asking for permission to create a Stream
+   backed by a Input then consuming that data over a Transport. All data from the Transport can be accessed over a Session using core.async mechanics."
+  (:require [blah.transforms :as transforms]
+            [cljs.core.async :refer [chan put! go <! >! close!]]
             [cljs.core.async.impl.protocols :as async.proto]))
 
 (def media-devices
@@ -63,6 +84,11 @@
     stream))
 
 ;;; Transport
+
+; Creating a URL via a Blob of JavaScript seemed preferable to expecting
+; an end user to provide a worker script. This JavaScript string will
+; be loaded automatically as the result of the processor-url function when
+; creating a new Transport
 
 (def processor-js
   (str
@@ -197,6 +223,6 @@
   ([input xform]
    (listen input xform nil))
   ([input]
-   (listen input nil nil))
+   (listen input blah.transforms/samples->frames))
   ([]
    (listen nil)))

@@ -9,16 +9,6 @@
 
 ;;; Helpers built to spark joy!
 
-(defn array->frames
-  "Used as a transform for the blah channel. Converts the raw JS message into a sequence
-   of sample frames with each frame containing a sample from each input channel"
-  [message]
-  (let [num-channels (.-length message)]
-    (->> (array-seq message)
-         (map array-seq)
-         (apply interleave)
-         (partition num-channels))))
-
 (defn disable-elements
   "Helper for disabling html elements"
   [& elems]
@@ -82,7 +72,7 @@
 (defmethod ig/init-key :blah/listen [_ {:keys [state]}]
   (fn []
     (let [{:keys [input]} @state]
-      (blah/listen input (map array->frames)))))
+      (blah/listen input))))
 
 ; The data handler is called as audio data becomes available on the blah session
 
