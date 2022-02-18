@@ -5,6 +5,8 @@ Blah lets you stream babbling itself!
 A ClojureScript library for reading audio input (i.e microphone input) as a stream of data. Record it! Transform it! Send it
 some place for transcription! The possibilities are endless!
 
+[![cljdoc badge](https://cljdoc.org/badge/com.github.brianium/blah)](https://cljdoc.org/d/com.github.brianium/blah/CURRENT) [![Clojars Project](https://img.shields.io/clojars/v/com.github.brianium/blah.svg)](https://clojars.org/com.github.brianium/blah)
+
 ## Table of contents
 
 - [Usage](#usage)
