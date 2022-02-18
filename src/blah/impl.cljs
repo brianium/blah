@@ -167,6 +167,11 @@
    context))
 
 (defn create-session
+  "A session behaves like a core.async ReadPort. The only difference
+   is that it also contains a reference to the AudioContext used for listening.
+   This is useful for using an already \"warm\" audio context. This makes it possible
+   to play audio on it without forcing user interaction again (some browsers require
+   a user action before allowing audio within a context)"
   [data-ch context]
   (->Session data-ch context))
 
