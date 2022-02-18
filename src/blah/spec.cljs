@@ -11,7 +11,7 @@
 
 (s/def ::label string?)
 
-(s/def ::input (s/keys :req-un [::device-id ::group-id ::kind ::label]))
+(s/def ::input (s/keys :req-un [::device-id] :opt-un [::group-id ::kind ::label]))
 
 (s/def ::inputs (s/coll-of ::input))
 

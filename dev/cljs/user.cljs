@@ -72,7 +72,7 @@
 (defmethod ig/init-key :blah/listen [_ {:keys [state]}]
   (fn []
     (let [{:keys [input]} @state]
-      (blah/listen input))))
+      (blah/listen {:device-id input}))))
 
 ; The data handler is called as audio data becomes available on the blah session
 
