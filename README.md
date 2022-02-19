@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="mic.gif">
+</p>
+
 # blah
 
 Blah lets you stream babbling itself!
