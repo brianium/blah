@@ -1,0 +1,1 @@
+{:optimizations :advanced, :main cljs.user, :output-to "out/main.js", :output-dir "out", :aot-cache true}
