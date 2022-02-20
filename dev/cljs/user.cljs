@@ -198,6 +198,6 @@
 ;;; Call these jams from the REPL for a really good time! A typical repl workflow would be loading this file and calling these 
 ;;; commented functions as needed
 
-#_(def system (start))
+(def system (start))
 
 #_(stop system)

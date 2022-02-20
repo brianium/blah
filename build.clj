@@ -12,7 +12,8 @@
 (def jar-file (format "target/%s.jar" (name lib)))
 
 (defn clean [_]
-  (b/delete {:path "target"}))
+  (doseq [path ["target" "public" "out"]]
+    (b/delete {:path path})))
 
 (defn jar [_]
   (b/write-pom {:class-dir class-dir
@@ -28,3 +29,16 @@
                :target-dir class-dir})
   (b/jar {:class-dir class-dir
           :jar-file jar-file}))
+
+(defn out [_]
+  (let [cmds (b/java-command
+              {:basis (b/create-basis {:aliases [:dev] :project "deps.edn"})
+               :main 'clojure.main
+               :main-args ["-m" "cljs.main" "-co" "{:pseudo-names true :pretty-print true}" "--optimizations" "advanced" "-c" "cljs.user"]})]
+    (b/process cmds)))
+
+(defn demo [_]
+  (out _)
+  (b/copy-dir {:src-dirs ["out"]
+               :target-dir "public/out"})
+  (b/copy-file {:src "index.html" :target "public/index.html"}))
