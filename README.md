@@ -1,8 +1,9 @@
 <p align="center">
   <img src="mic.gif">
+  <br />
+  <img src="logo-text.png" alt="Blah">
 </p>
 
-# blah
 
 Blah lets you stream babbling itself!
 
