@@ -148,24 +148,39 @@
     ch))
 
 (defn connect-transport
+  "Begins streaming data over the transport, in this case connecting a media stream to
+   an audio worklet. Data is pushed to the given data channel as it is made available by the worklet."
   [{:keys [source node media-stream]} data-ch close-ch]
-  (let [port   (.-port node)
-        tracks (.getAudioTracks media-stream)]
-    (doseq [track tracks]
-      (.addEventListener track "end" #(put! close-ch {:reason :ended :error nil})))
+  (let [port (.-port node)]
+    (doseq [track (.getAudioTracks media-stream)]
+      (.addEventListener track "end" #(put! close-ch {:reason :ended
+                                                      :error  nil})))
     (set! (.-onmessage port) #(go
                                 (when-not (>! data-ch (.-data %))
-                                  (put! close-ch {:reason :closed :error nil}))))
-    (.connect source node)
-    (go
-      (let [{:keys [error]} (<! close-ch)]
-        (doseq [track tracks]
-          (.stop track))
-        (doseq [ch [data-ch close-ch]]
-          (close! ch))
-        (.disconnect source node)
-        (when (some? error)
-          (throw error))))))
+                                  (put! close-ch {:reason :closed
+                                                  :error  nil}))))
+    (.connect source node)))
+
+(defn disconnect-transport
+  "Disconnect the source from the worklet. Also stops audio
+   tracks from the media stream."
+  [{:keys [source node media-stream]}]
+  (doseq [track (.getAudioTracks media-stream)]
+    (.stop track))
+  (.disconnect source node))
+
+(defn start-transport
+  [[ok? result] data-ch close-ch]
+  (when ok?
+    (connect-transport result data-ch close-ch))
+  (go
+    (let [{:keys [error]} (<! close-ch)]
+      (when ok?
+        (disconnect-transport result))
+      (doseq [ch [data-ch close-ch]]
+        (close! ch))
+      (when (some? error)
+        (throw error)))))
 
 ;;; Session
 
@@ -204,11 +219,11 @@
 (defn start-session
   [transport data-ch close-ch]
   (go
-    (let [[ok? result] (<! transport)]
-      (if-not ok?
-        (put! close-ch {:reason :error
-                        :error  result})
-        (connect-transport result data-ch close-ch)))))
+    (let [result    (<! transport)
+          [ok? err] result]
+      (when-not ok?
+        (>! close-ch {:error err :reason :error}))
+      (start-transport result data-ch close-ch))))
 
 (defn listen
   ([input xform ex-handler]
