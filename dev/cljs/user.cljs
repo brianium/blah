@@ -170,17 +170,18 @@
          (gevents/listenOnce
           stop-button
           EventType.CLICK
-          (fn []
-            (stop context session)
-            (enable-elements inputs start)
-            (disable-elements stop-button)))
+          #(stop context session))
 
          ;;; Let's gather microphone jams as they arrive, passing them to the data handler
          (a/go-loop []
            (let [audio-data (a/<! session)]
-             (when audio-data
-               (data audio-data)
-               (recur)))))))
+             (if-not audio-data ;; No audio data means we are done or a user did not give permission
+               (do
+                 (enable-elements inputs start)
+                 (disable-elements stop-button))
+               (do
+                 (data audio-data)
+                 (recur))))))))
 
     ;;; Supports selecting which audio input to gather the jams on
     (gevents/listen inputs EventType.CHANGE #(swap! state assoc :input (.. % -target -value)))))
