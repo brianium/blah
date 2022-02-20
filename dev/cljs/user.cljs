@@ -135,7 +135,9 @@
           (gdom/removeChildren inputs-select)
           (doseq [{:keys [label device-id]} audio-inputs]
             (let [option (gdom/createElement "option")]
-              (gdom/append option label)
+              (gdom/append option (if (seq label)
+                                    label
+                                    "Default"))
               (.setAttribute option "value" device-id)
               (gdom/append inputs-select option)))
           (recur))))
