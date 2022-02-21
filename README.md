@@ -20,6 +20,7 @@ some place for transcription! The possibilities are endless!
   - [Caveats](#caveats)
 - [Data](#data)
 - [Development](#development)
+- [Advanced Compilation](#advanced-compilation)
 
 ### Usage
 
@@ -81,8 +82,7 @@ If a transducer is omitted it will use `blah.transforms/samples->frames`.
 
 #### Caveats
 
-Many browsers require a user action to initiate audio contexts. This means a robust application of blah will start a session as part of a
-click handler or some other user interaction. See [dev/cljs/user.cljs](dev/cljs/user.cljs) for an example of developing with blah.
+Many browsers require a user action to initiate audio contexts and enumerate devices. This means a robust application of blah will start a session as part of a click handler or some other user interaction. See [dev/cljs/user.cljs](dev/cljs/user.cljs) for an example of developing with blah.
 
 ### Data
 
@@ -124,3 +124,12 @@ Blah is developed using a vanilla ClojureScript repl. This plays well with devel
 See the [ClojureScript quick start](https://clojurescript.org/guides/quick-start) for info on running a repl. 
 
 See [dev/cljs/user.cljs](dev/cljs/user.cljs). This is where development takes place.
+
+### Advanced Compilation
+
+Blah is developed using ClojureScript 1.11.4+
+
+Versions prior to this one should work fine, but they may have issues with advanced compilation. The reason
+for this is that externs for the native `AudioContext` and `audioWorklet` were not fully in place.
+
+As of 1.11.4, advanced compilation is no problem.
