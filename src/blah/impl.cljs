@@ -169,18 +169,29 @@
     (.stop track))
   (.disconnect source node))
 
-(defn start-transport
-  [[ok? result] data-ch close-ch]
-  (when ok?
-    (connect-transport result data-ch close-ch))
+(defn handle-close
+  "Waits for a signal to close down the transport. Handles disconnecting
+  an active transport, closing channels, and throwing errors if present"
+  [transport data-ch close-ch]
   (go
     (let [{:keys [error]} (<! close-ch)]
-      (when ok?
-        (disconnect-transport result))
+      (when transport
+        (disconnect-transport transport))
       (doseq [ch [data-ch close-ch]]
         (close! ch))
       (when (some? error)
         (throw error)))))
+
+(defn start-transport
+  "Start the transport and return a data channel to stream audio data over"
+  [transport-ch data-ch close-ch]
+  (go
+    (let [[ok? result] (<! transport-ch)]
+      (if ok?
+        (connect-transport result data-ch close-ch)
+        (>! close-ch {:error result :reason :error}))
+      (handle-close (when ok? result) data-ch close-ch)))
+  data-ch)
 
 ;;; Session
 
@@ -216,15 +227,6 @@
   [data-ch context]
   (->Session data-ch context))
 
-(defn start-session
-  [transport data-ch close-ch]
-  (go
-    (let [result    (<! transport)
-          [ok? err] result]
-      (when-not ok?
-        (>! close-ch {:error err :reason :error}))
-      (start-transport result data-ch close-ch))))
-
 (defn listen
   ([input xform ex-handler]
    (let [context  (create-context)
@@ -233,8 +235,8 @@
      (-> input
          (stream-ch)
          (transport-ch context)
-         (start-session data-ch close-ch))
-     (create-session data-ch context)))
+         (start-transport data-ch close-ch)
+         (create-session context))))
   ([input xform]
    (listen input xform nil))
   ([input]
