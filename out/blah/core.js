@@ -34,8 +34,8 @@ cljs.spec.alpha.def_impl(cljs.core.cst$sym$blah$core_SLASH_query_DASH_inputs,clj
  * ```
  */
 blah.core.input_ch = (function blah$core$input_ch(var_args){
-var G__2696 = arguments.length;
-switch (G__2696) {
+var G__2706 = arguments.length;
+switch (G__2706) {
 case 1:
 return blah.core.input_ch.cljs$core$IFn$_invoke$arity$1((arguments[(0)]));
 
@@ -114,8 +114,8 @@ cljs.spec.alpha.def_impl(cljs.core.cst$sym$blah$core_SLASH_audio_DASH_context,cl
  * ```
  */
 blah.core.listen = (function blah$core$listen(var_args){
-var G__2699 = arguments.length;
-switch (G__2699) {
+var G__2709 = arguments.length;
+switch (G__2709) {
 case 3:
 return blah.core.listen.cljs$core$IFn$_invoke$arity$3((arguments[(0)]),(arguments[(1)]),(arguments[(2)]));
 
