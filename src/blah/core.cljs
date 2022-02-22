@@ -28,10 +28,8 @@
    Creating an input-ch will place an initial sequence of inputs on the channel before
    it is returned.
    
-   A close channel is not required, but is necessary to gracefully shut down the input channel. This
-   is mostly to unbind event listeners bound to the global mediaDevices object. If the input channel is not
-   gracefully shut down, the result may be extra messages to your input-ch. There are worse fates
-   in life.
+   This channel should be closed when it is no longer needed. This is mostly to unbind event listeners
+   bound to the global mediaDevices object.
    
    ```clojure
    (let [inputs (input-ch)]
@@ -39,10 +37,8 @@
        (let [audio-inputs (<! inputs)]
          (update-ui audio-inputs))))
    ```"
-  ([close-ch]
-   (impl/input-ch close-ch))
-  ([]
-   (impl/input-ch)))
+  []
+  (impl/input-ch))
 
 (s/fdef input-ch
   :args (s/cat :close-ch (s/? ::blah.spec/write-port))

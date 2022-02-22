@@ -20,7 +20,7 @@
    Finally, Sessions are used to glue all these concepts into a single point. It represents the act of asking for permission to create a Stream
    backed by a Input then consuming that data over a Transport. All data from the Transport can be accessed over a Session using core.async mechanics."
   (:require [blah.transforms :as transforms]
-            [cljs.core.async :refer [chan put! go <! >! close!]]
+            [cljs.core.async :refer [chan put! go go-loop <! >! close!]]
             [cljs.core.async.impl.protocols :as async.proto]))
 
 (def media-devices
@@ -58,19 +58,20 @@
                       (filter #(= "audioinput" (:kind %)))
                       fn-1))))))
 
-(defn input-ch
-  ([close-ch]
-   (let [ch       (chan 1)
-         listener (fn [] (query-inputs #(put! ch %)))]
-     (.addEventListener media-devices "devicechange" listener)
-     (query-inputs #(put! ch %))
-     (when (some? close-ch)
-       (go
-         (<! close-ch)
-         (.removeEventListener media-devices "devicechange" listener)))
-     ch))
-  ([]
-   (input-ch nil)))
+(defn input-ch []
+  (let [signal   (chan 1)
+        data     (chan 1)
+        listener #(put! signal :ready)]
+    (.addEventListener media-devices "devicechange" listener)
+    (query-inputs #(put! data %))
+    (go-loop []
+      (when (<! signal)
+        (query-inputs (fn [inputs]
+                        (when-not (put! data inputs)
+                          (close! signal)
+                          (.removeEventListener media-devices "devicechange" listener))))
+        (recur)))
+    data))
 
 ;;; Streams
 

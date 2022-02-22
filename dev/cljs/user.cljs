@@ -101,17 +101,16 @@
       (swap! state assoc :frames []))))
 
 ; Returns a channel that receives device updates - i.e a new mic was plugged in
-; while we are partying. Returns a tuple containing [input-ch, close-ch]. Send a message
-; to the close-ch to shut things down GRACEFULLY (i.e remove listeners attached to the global mediaDevices object)
+; while we are partying. Returns an input-ch. Close the channel
+; in order to shut things down GRACEFULLY (i.e remove listeners attached to the global mediaDevices object)
 
 (defmethod ig/init-key :input/ch [_ _]
-  (let [close-ch (a/chan 1)]
-    [(blah/input-ch close-ch) close-ch]))
+  (blah/input-ch))
 
 ; The mentioned shutting down of things
 
-(defmethod ig/halt-key! :input/ch [_ [_ close-ch]]
-  (a/put! close-ch :closed))
+(defmethod ig/halt-key! :input/ch [_ input-ch]
+  (a/close! input-ch))
 
 ; It aint much ui state, but it's honest. Returns state that should be modified by ui actions. Logs changes to the repl
 
@@ -130,7 +129,7 @@
   (let [inputs-select (gdom/getElement inputs)]
     ;;; Keep audio input select up to date
     (a/go-loop []
-      (let [audio-inputs (a/<! (first ch))] ;;; ch is a data/close channel pair
+      (let [audio-inputs (a/<! ch)] ;;; ch is a data/close channel pair
         (when audio-inputs
           (gdom/removeChildren inputs-select)
           (doseq [{:keys [label device-id]} audio-inputs]
