@@ -26,6 +26,11 @@
 (def media-devices
   (.. js/navigator -mediaDevices))
 
+(defn stop-audio-tracks
+  [media-stream]
+  (doseq [track (.getAudioTracks media-stream)]
+    (.stop track)))
+
 ;;; Inputs
 
 (defn info->input
@@ -166,8 +171,7 @@
   "Disconnect the source from the worklet. Also stops audio
    tracks from the media stream."
   [{:keys [source node media-stream]}]
-  (doseq [track (.getAudioTracks media-stream)]
-    (.stop track))
+  (stop-audio-tracks media-stream)
   (.disconnect source node))
 
 (defn handle-close
@@ -244,3 +248,14 @@
    (listen input blah.transforms/samples->frames))
   ([]
    (listen nil)))
+
+(defn request-permission []
+  (let [ch    (chan 1)
+        *prom (connect-input nil)]
+    (-> *prom
+        (.then  #(put! ch %))
+        (.catch #(put! ch false)))
+    (go
+      (if-let [stream (<! ch)]
+        (nil? (stop-audio-tracks stream))
+        false))))

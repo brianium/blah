@@ -114,3 +114,21 @@
                :binary (s/cat :input (s/nilable ::blah.spec/input) :xform any?)
                :all    (s/cat :input (s/nilable ::blah.spec/input) :xform any? :ex-handler fn?))
   :ret  ::blah.spec/session)
+
+(defn request-permission
+  "A utility for preemptively asking for access to the microphone.
+   
+   Returns a channel that will contain true or false based on the user's response.
+   
+   ```clojure
+   (go
+     (if (<! (request-permission))
+       (do-mic-jams)
+       (uh-oh-no-mic-access)))
+   ```"
+  []
+  (impl/request-permission))
+
+(s/fdef request-permission
+  :args (s/cat)
+  :ret  ::blah.spec/read-port)

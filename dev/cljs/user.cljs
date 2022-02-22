@@ -57,13 +57,15 @@
    :handler/stop  {:state (ig/ref :handler/state)}
    :input/ch      {}
    :ui/state      {:input nil}
-   :ui/controls   {:input/ch      (ig/ref :input/ch)
-                   :button/start  "start"
-                   :button/stop   "stop"
-                   :select/inputs "inputs"}
+   :ui/controls   {:input/ch       (ig/ref :input/ch)
+                   :button/start   "start"
+                   :button/stop    "stop"
+                   :button/request "ask"
+                   :select/inputs  "inputs"}
    :ui/listeners  {:controls     (ig/ref :ui/controls)
                    :handler/data (ig/ref :handler/data)
                    :handler/stop (ig/ref :handler/stop)
+                   :input/ch     (ig/ref :input/ch)
                    :listen       (ig/ref :blah/listen)
                    :state        (ig/ref :ui/state)}})
 
@@ -125,7 +127,7 @@
 ; This should also handle changes to the UI. For instance, the input channel is consumed to keep
 ; the dropdown of allowed audio inputs up to date
 
-(defmethod ig/init-key :ui/controls [_ {:button/keys [start stop] :select/keys [inputs] :input/keys [ch]}]
+(defmethod ig/init-key :ui/controls [_ {:button/keys [start stop request] :select/keys [inputs] :input/keys [ch]}]
   (let [inputs-select (gdom/getElement inputs)]
     ;;; Keep audio input select up to date
     (a/go-loop []
@@ -140,9 +142,10 @@
               (.setAttribute option "value" device-id)
               (gdom/append inputs-select option)))
           (recur))))
-    {:button/start  (gdom/getElement start)
-     :button/stop   (gdom/getElement stop)
-     :select/inputs inputs-select}))
+    {:button/start   (gdom/getElement start)
+     :button/stop    (gdom/getElement stop)
+     :button/request (gdom/getElement request)
+     :select/inputs  inputs-select}))
 
 ; Remove event listeners and make those controls inert until the system is started again
 
@@ -153,8 +156,8 @@
 ; Configures listeners for the ui elements used for testing. This is where all the things
 ; are wired up. 
 
-(defmethod ig/init-key :ui/listeners [_ {:keys [controls listen state] :handler/keys [data stop]}]
-  (let [{:button/keys [start] :select/keys [inputs]} controls
+(defmethod ig/init-key :ui/listeners [_ {:keys [controls listen state] :handler/keys [data stop] :input/keys [ch]}]
+  (let [{:button/keys [start request] :select/keys [inputs]} controls
         stop-button                                  (:button/stop controls)]
 
     ;;; Clicking yon start button commences a microphone jam
@@ -185,7 +188,17 @@
                  (recur))))))))
 
     ;;; Supports selecting which audio input to gather the jams on
-    (gevents/listen inputs EventType.CHANGE #(swap! state assoc :input (.. % -target -value)))))
+    (gevents/listen inputs EventType.CHANGE #(swap! state assoc :input (.. % -target -value)))
+
+    ;;; Test explicit permission request
+    (gevents/listen
+     request
+     EventType.CLICK
+     (fn []
+       (a/go
+         (if (a/<! (blah/request-permission))
+           (blah/query-inputs #(a/put! ch %)) ;;; In the realworld, we would probably not put! to the input ch ourselves
+           (js/alert "permission denied")))))))
 
 (defn start
   "Start the system by populating controls and wiring up event listeners"
