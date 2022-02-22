@@ -112,7 +112,7 @@
 
 ;;; I have no idea how to spec a transducer
 
-(s/fdef input
+(s/fdef listen
   :args (s/alt :null   (s/cat)
                :unary  (s/cat :input (s/nilable ::blah.spec/input))
                :binary (s/cat :input (s/nilable ::blah.spec/input) :xform any?)
