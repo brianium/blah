@@ -245,7 +245,7 @@
   ([input xform]
    (listen input xform nil))
   ([input]
-   (listen input blah.transforms/frames))
+   (listen input blah.transforms/float32))
   ([]
    (listen nil)))
 

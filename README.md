@@ -73,12 +73,12 @@ A transducer can be supplied, and this works exactly as it does with a core.asyn
 
 ```clojure
 ;;; We give nil as the input to use the default audio input
-(let [session (blah/listen nil blah.transforms/frames)]
-  (go-loop []
+(let [session (blah/listen nil blah.transforms/float32)]
+  (go-loop []å
     ,,,))
 ```
 
-If a transducer is omitted it will use `blah.transforms/frames`.
+If a transducer is omitted it will use `blah.transforms/float32`.
 
 #### Caveats
 
