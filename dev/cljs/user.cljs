@@ -24,12 +24,12 @@
 
 (defn create-buffer
   "Creates a an audio buffer for storing recorded audio"
-  [context frames byte-count]
+  [context frames]
   (let [sample-rate (.-sampleRate context)
         channels    (-> frames first count)]
     (if (= 0 channels)
       (throw (js/Error. "Frames required to make a buffer"))
-      (.createBuffer context channels (* byte-count (count frames)) sample-rate))))
+      (.createBuffer context channels (* 4 (count frames)) sample-rate))))
 
 (defn record-frames
   "Write sample frames to the given audio buffer"
@@ -53,9 +53,9 @@
 
 (defn playback
   "Plays the recorded sample frames back on the audio context used for recording."
-  [byte-content context frames]
+  [context frames]
   (-> context
-      (create-buffer frames byte-content)
+      (create-buffer frames)
       (record-frames frames)
       (play-recording context)))
 
@@ -67,7 +67,7 @@
    :handler/data   {:state (ig/ref :handler/state)}
    :handler/state  {:frames []}
    :handler/stop   {:state   (ig/ref :handler/state)
-                    :stop-fn (partial playback 4)}
+                    :stop-fn playback}
    :input/ch       {}
    :ui/state       {:input nil}
    :ui/controls    {:input/ch       (ig/ref :input/ch)
@@ -210,29 +210,23 @@
            (blah/query-inputs #(a/put! ch %)) ;;; In the realworld, we would probably not put! to the input ch ourselves
            (js/alert "permission denied")))))))
 
+(defonce *system (atom nil))
+
 (defn start
   "Start the system by populating controls and wiring up event listeners"
   []
-  (ig/init app-config))
+  (reset! *system (ig/init app-config)))
 
 (defn stop
   "Stop the system. Removes event listeners and closes channels"
-  [system]
-  (ig/halt! system)
-  :stopped)
+  []
+  (when-some [system @*system]
+    (ig/halt! system)
+    :stopped))
 
-(defn restart
-  [system]
-  (stop system)
-  (ig/resume app-config system)
-  :restarted)
+(defn restart []
+  (stop)
+  (start))
 
-;;; Call these jams from the REPL for a really good time! A typical repl workflow would be loading this file and calling these 
-;;; commented functions as needed
-
-(def system (start))
-
-#_(stop system)
-
-#_(restart system)
+(restart)
 
