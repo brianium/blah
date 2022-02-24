@@ -1,6 +1,7 @@
 (ns cljs.user
   "Contains a system for tinkering with blah"
   (:require [blah.core :as blah]
+            [blah.transforms :as blah.xf]
             [cljs.core.async :as a]
             [cljs.pprint]
             [integrant.core :as ig]
@@ -48,33 +49,44 @@
     (.connect source (.-destination context))
     (.start source)))
 
+;;; :handler/stop jams 
+
+(defn playback
+  "Plays the recorded sample frames back on the audio context used for recording."
+  [context frames]
+  (-> context
+      (create-buffer frames)
+      (record-frames frames)
+      (play-recording context)))
+
 ;;; A development system powered by integrant. Start it! Stop it! Rejoice!
 
 (def app-config
-  {:blah/listen   {:state (ig/ref :ui/state)}
-   :handler/data  {:state (ig/ref :handler/state)}
-   :handler/state {:frames []}
-   :handler/stop  {:state (ig/ref :handler/state)}
-   :input/ch      {}
-   :ui/state      {:input nil}
-   :ui/controls   {:input/ch       (ig/ref :input/ch)
-                   :button/start   "start"
-                   :button/stop    "stop"
-                   :button/request "ask"
-                   :select/inputs  "inputs"}
-   :ui/listeners  {:controls     (ig/ref :ui/controls)
-                   :handler/data (ig/ref :handler/data)
-                   :handler/stop (ig/ref :handler/stop)
-                   :input/ch     (ig/ref :input/ch)
-                   :listen       (ig/ref :blah/listen)
-                   :state        (ig/ref :ui/state)}})
+  {:blah/listen    {:state (ig/ref :ui/state)
+                    :xform blah.xf/samples->frames}
+   :handler/data   {:state (ig/ref :handler/state)}
+   :handler/state  {:frames []}
+   :handler/stop   {:state (ig/ref :handler/state)}
+   :input/ch       {}
+   :ui/state       {:input nil}
+   :ui/controls    {:input/ch       (ig/ref :input/ch)
+                    :button/start   "start"
+                    :button/stop    "stop"
+                    :button/request "ask"
+                    :select/inputs  "inputs"}
+   :ui/listeners   {:controls     (ig/ref :ui/controls)
+                    :handler/data (ig/ref :handler/data)
+                    :handler/stop (ig/ref :handler/stop)
+                    :input/ch     (ig/ref :input/ch)
+                    :listen       (ig/ref :blah/listen)
+                    :state        (ig/ref :ui/state)}})
 
 ; Return a function that listens to audio on the input stored in state
 
-(defmethod ig/init-key :blah/listen [_ {:keys [state]}]
+(defmethod ig/init-key :blah/listen [_ {:keys [state xform]}]
   (fn []
     (let [{:keys [input]} @state]
-      (blah/listen {:device-id input}))))
+      (blah/listen {:device-id input} xform))))
 
 ; The data handler is called as audio data becomes available on the blah session
 
@@ -94,10 +106,7 @@
   (fn [context session]
     (a/close! session)
     (let [{:keys [frames]} @state]
-      (-> context
-          (create-buffer frames)
-          (record-frames frames)
-          (play-recording context))
+      (playback context frames)
 
       ;;; Reset handler state
       (swap! state assoc :frames []))))
