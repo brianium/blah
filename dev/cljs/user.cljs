@@ -62,55 +62,59 @@
 ;;; A development system powered by integrant. Start it! Stop it! Rejoice!
 
 (def app-config
-  {:blah/listen    {:state (ig/ref :ui/state)
-                    :xform (comp blah.xf/float32 blah.xf/frames)}
-   :handler/data   {:state (ig/ref :handler/state)}
-   :handler/state  {:frames []}
-   :handler/stop   {:state   (ig/ref :handler/state)
-                    :stop-fn playback}
-   :input/ch       {}
-   :ui/state       {:input nil}
-   :ui/controls    {:input/ch       (ig/ref :input/ch)
-                    :button/start   "start"
-                    :button/stop    "stop"
-                    :button/request "ask"
-                    :select/inputs  "inputs"}
-   :ui/listeners   {:controls     (ig/ref :ui/controls)
-                    :handler/data (ig/ref :handler/data)
-                    :handler/stop (ig/ref :handler/stop)
-                    :input/ch     (ig/ref :input/ch)
-                    :listen       (ig/ref :blah/listen)
-                    :state        (ig/ref :ui/state)}})
+  {:blah/start   {:state (ig/ref :ui/state)
+                  :xform (comp blah.xf/float32 blah.xf/frames)}
+   :blah/stop    {:state   (ig/ref :blah/state)
+                  :stop-fn playback}
+   :blah/data    {:state  (ig/ref :blah/state)
+                  :map-fn identity}
+   :blah/state   {:data []}
+
+   :input/ch     {}
+
+   :ui/state     {:input nil}
+   :ui/controls  {:input/ch       (ig/ref :input/ch)
+                  :button/start   "start"
+                  :button/stop    "stop"
+                  :button/request "ask"
+                  :select/inputs  "inputs"}
+
+   :ui/listeners {:handler/data  (ig/ref :blah/data)
+                  :handler/start (ig/ref :blah/start)
+                  :handler/stop  (ig/ref :blah/stop)
+                  :input/ch      (ig/ref :input/ch)
+                  :controls      (ig/ref :ui/controls)
+                  :state         (ig/ref :ui/state)}})
 
 ; Return a function that listens to audio on the input stored in state
 
-(defmethod ig/init-key :blah/listen [_ {:keys [state xform]}]
+(defmethod ig/init-key :blah/start [_ {:keys [state xform]}]
   (fn []
     (let [{:keys [input]} @state]
       (blah/listen {:device-id input} xform))))
 
 ; The data handler is called as audio data becomes available on the blah session
 
-(defmethod ig/init-key :handler/data [_ {:keys [state]}]
-  (fn [frames]
-    (swap! state #(update % :frames into frames))))
+(defmethod ig/init-key :blah/data [_ {:keys [state map-fn]}]
+  (fn [data]
+    (swap! state #(update % :data into (map map-fn data)))))
 
-; We will store sample frames inside of the handler state. This will be useful for manipulating, visualizing, playing collected audio
+; We will store sample frames inside of the blah state. This will be useful for manipulating, visualizing, playing collected audio
 
-(defmethod ig/init-key :handler/state [_ initial]
+(defmethod ig/init-key :blah/state [_ initial]
   (atom initial))
 
 ; Return a function that will be used when audio gathering is complete. This should shut the blah session down by closing
-; the channel and processing the handler/state in some way. For now this is just playing it back
+; the channel and processing the blah/state in some way. For now this is just playing it back
 
-(defmethod ig/init-key :handler/stop [_ {:keys [state stop-fn]}]
+(defmethod ig/init-key :blah/stop [_ {:keys [state stop-fn]}]
   (fn [context session]
     (a/close! session)
-    (let [{:keys [frames]} @state]
-      (stop-fn context frames)
+    (let [{:keys [data]} @state]
+      (stop-fn context data)
 
-      ;;; Reset handler state
-      (swap! state assoc :frames []))))
+      ;;; Reset playback state
+      (swap! state assoc :data []))))
 
 ; Returns a channel that receives device updates - i.e a new mic was plugged in
 ; while we are partying. Returns an input-ch. Close the channel
@@ -166,18 +170,20 @@
 ; Configures listeners for the ui elements used for testing. This is where all the things
 ; are wired up. 
 
-(defmethod ig/init-key :ui/listeners [_ {:keys [controls listen state] :handler/keys [data stop] :input/keys [ch]}]
-  (let [{:button/keys [start request] :select/keys [inputs]} controls
-        stop-button                                  (:button/stop controls)]
+(defmethod ig/init-key :ui/listeners [_ {:keys [controls state] :handler/keys [data start stop] :input/keys [ch]}]
+  (let [{:button/keys [request]
+         :select/keys [inputs]}        controls
+        {stop-button  :button/stop
+         start-button :button/start} controls]
 
     ;;; Clicking yon start button commences a microphone jam
     (gevents/listen
-     start
+     start-button
      EventType.CLICK
      (fn []
-       (disable-elements inputs start)
+       (disable-elements inputs start-button)
        (enable-elements stop-button)
-       (let [session (listen)
+       (let [session (start)
              context (blah/audio-context session)]
 
          ;;; Clicking yon stop button ends the microphone jams and calls the stop handler
@@ -191,7 +197,7 @@
            (let [audio-data (a/<! session)]
              (if-not audio-data ;; No audio data means we are done or a user did not give permission
                (do
-                 (enable-elements inputs start)
+                 (enable-elements inputs start-button)
                  (disable-elements stop-button))
                (do
                  (data audio-data)
@@ -209,6 +215,8 @@
          (if (a/<! (blah/request-permission))
            (blah/query-inputs #(a/put! ch %)) ;;; In the realworld, we would probably not put! to the input ch ourselves
            (js/alert "permission denied")))))))
+
+;;; Run the system
 
 (defonce *system (atom nil))
 
