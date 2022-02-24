@@ -24,12 +24,12 @@
 
 (defn create-buffer
   "Creates a an audio buffer for storing recorded audio"
-  [context frames]
+  [context frames byte-count]
   (let [sample-rate (.-sampleRate context)
         channels    (-> frames first count)]
     (if (= 0 channels)
       (throw (js/Error. "Frames required to make a buffer"))
-      (.createBuffer context channels (count frames) sample-rate))))
+      (.createBuffer context channels (* byte-count (count frames)) sample-rate))))
 
 (defn record-frames
   "Write sample frames to the given audio buffer"
@@ -53,9 +53,9 @@
 
 (defn playback
   "Plays the recorded sample frames back on the audio context used for recording."
-  [context frames]
+  [byte-content context frames]
   (-> context
-      (create-buffer frames)
+      (create-buffer frames byte-content)
       (record-frames frames)
       (play-recording context)))
 
@@ -66,7 +66,8 @@
                     :xform (comp blah.xf/float32 blah.xf/frames)}
    :handler/data   {:state (ig/ref :handler/state)}
    :handler/state  {:frames []}
-   :handler/stop   {:state (ig/ref :handler/state)}
+   :handler/stop   {:state   (ig/ref :handler/state)
+                    :stop-fn (partial playback 4)}
    :input/ch       {}
    :ui/state       {:input nil}
    :ui/controls    {:input/ch       (ig/ref :input/ch)
@@ -102,11 +103,11 @@
 ; Return a function that will be used when audio gathering is complete. This should shut the blah session down by closing
 ; the channel and processing the handler/state in some way. For now this is just playing it back
 
-(defmethod ig/init-key :handler/stop [_ {:keys [state]}]
+(defmethod ig/init-key :handler/stop [_ {:keys [state stop-fn]}]
   (fn [context session]
     (a/close! session)
     (let [{:keys [frames]} @state]
-      (playback context frames)
+      (stop-fn context frames)
 
       ;;; Reset handler state
       (swap! state assoc :frames []))))
@@ -217,7 +218,14 @@
 (defn stop
   "Stop the system. Removes event listeners and closes channels"
   [system]
-  (ig/halt! system))
+  (ig/halt! system)
+  :stopped)
+
+(defn restart
+  [system]
+  (stop system)
+  (ig/resume app-config system)
+  :restarted)
 
 ;;; Call these jams from the REPL for a really good time! A typical repl workflow would be loading this file and calling these 
 ;;; commented functions as needed
@@ -225,3 +233,6 @@
 (def system (start))
 
 #_(stop system)
+
+#_(restart system)
+
