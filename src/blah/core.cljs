@@ -79,7 +79,7 @@
    If an exception occurs during transformation exception-handler will be called with the error, and any
    non-nil return value will be placed in the channel.
    
-   If no transducer is given, a default will be provided via [[blah.transforms/samples->frames]]. This transform
+   If no transducer is given, a default will be provided via [[blah.transforms/frames]]. This transform
    will return streamed data as a sequence of partitioned sample frames - i.e:
 
    ```clojure
@@ -93,7 +93,7 @@
    The channels raw data format is a js array containing Float32 array for each audio input channel:
    
    ```clojure
-   (defn samples->frames
+   (defn frames
      [message] ;;; message = #js [floats-for-input-channel-1, floats-for-input-channel-2, ..., floats-for-input-channel-n]
      (process-message))
    ```"

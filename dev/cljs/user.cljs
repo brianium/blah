@@ -63,7 +63,7 @@
 
 (def app-config
   {:blah/listen    {:state (ig/ref :ui/state)
-                    :xform blah.xf/samples->frames}
+                    :xform blah.xf/frames}
    :handler/data   {:state (ig/ref :handler/state)}
    :handler/state  {:frames []}
    :handler/stop   {:state (ig/ref :handler/state)}

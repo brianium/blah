@@ -73,12 +73,12 @@ A transducer can be supplied, and this works exactly as it does with a core.asyn
 
 ```clojure
 ;;; We give nil as the input to use the default audio input
-(let [session (blah/listen nil blah.transforms/samples->frames)]
+(let [session (blah/listen nil blah.transforms/frames)]
   (go-loop []
     ,,,))
 ```
 
-If a transducer is omitted it will use `blah.transforms/samples->frames`.
+If a transducer is omitted it will use `blah.transforms/frames`.
 
 #### Caveats
 

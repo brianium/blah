@@ -14,11 +14,18 @@
    for the average Clojurist.")
 
 (def
-  ^{:doc "Converts the raw JS message into a sequence of sample frames with each frame containing a sample from each input channel."}
-  samples->frames
+  ^{:doc "Converts the raw JS message into a sequence of sample sequences. Each sample sequence represents an input channel"}
+  seqs
   (map (fn [message]
-         (let [num-channels (.-length message)]
-           (->> (array-seq message)
-                (map array-seq)
-                (apply interleave)
-                (partition num-channels))))))
+         (->> (array-seq message)
+              (map array-seq)))))
+
+(def
+  ^{:doc "Converts the raw JS message into a sequence of sample frames with each frame containing a sample from each input channel."}
+  frames
+  (comp
+   seqs
+   (map (fn [samples]
+          (->> samples
+               (apply interleave)
+               (partition (count samples)))))))
