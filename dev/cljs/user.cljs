@@ -118,7 +118,7 @@
 (defmethod ig/init-key :input/ch [_ _]
   (blah/input-ch))
 
-; The mentioned shutting down of things
+; The aforementioned shutting down of things
 
 (defmethod ig/halt-key! :input/ch [_ input-ch]
   (a/close! input-ch))
