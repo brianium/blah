@@ -1,74 +1,18 @@
 (ns cljs.user
   "Contains a system for tinkering with blah"
   (:require [blah.core :as blah]
-            [blah.transforms :as blah.xf]
+            [blah.dev.wav :as wav]
+            [blah.dev.ui :as ui]
             [cljs.core.async :as a]
             [cljs.pprint]
             [integrant.core :as ig]
             [goog.dom :as gdom]
             [goog.events :as gevents :refer [EventType]]))
 
-;;; Helpers built to spark joy!
-
-(defn disable-elements
-  "Helper for disabling html elements"
-  [& elems]
-  (doseq [elem elems]
-    (.setAttribute elem "disabled" "disabled")))
-
-(defn enable-elements
-  "Helper for enabling html elements"
-  [& elems]
-  (doseq [elem elems]
-    (.removeAttribute elem "disabled")))
-
-(defn create-buffer
-  "Creates a an audio buffer for storing recorded audio"
-  [context frames]
-  (let [sample-rate (.-sampleRate context)
-        channels    (-> frames first count)]
-    (if (= 0 channels)
-      (throw (js/Error. "Frames required to make a buffer"))
-      (.createBuffer context channels (* 4 (count frames)) sample-rate))))
-
-(defn record-frames
-  "Write sample frames to the given audio buffer"
-  [buffer frames]
-  (dotimes [ch (.-numberOfChannels buffer)]
-    (let [now-buffering (.getChannelData buffer ch)]
-      (dotimes [i (count frames)]
-        (let [frame (nth frames i)]
-          (aset now-buffering i (nth frame ch))))))
-  buffer)
-
-(defn play-recording
-  "Play the audio stored in buffer within the given context"
-  [buffer context]
-  (let [source (.createBufferSource context)]
-    (set! (.-buffer source) buffer)
-    (.connect source (.-destination context))
-    (.start source)))
-
-;;; :handler/stop jams 
-
-(defn playback
-  "Plays the recorded sample frames back on the audio context used for recording."
-  [context frames]
-  (-> context
-      (create-buffer frames)
-      (record-frames frames)
-      (play-recording context)))
-
 ;;; A development system powered by integrant. Start it! Stop it! Rejoice!
 
-(def app-config
-  {:blah/start   {:state (ig/ref :ui/state)
-                  :xform (comp blah.xf/float32 blah.xf/frames)}
-   :blah/stop    {:state   (ig/ref :blah/state)
-                  :stop-fn playback}
-   :blah/data    {:state  (ig/ref :blah/state)
-                  :map-fn identity}
-   :blah/state   {:data []}
+(def base-config
+  {:blah/state   {:data []}
 
    :input/ch     {}
 
@@ -86,6 +30,14 @@
                   :controls      (ig/ref :ui/controls)
                   :state         (ig/ref :ui/state)}})
 
+;;; Make individual test cases swappable
+
+(def test-config wav/config)
+
+;;; App config is simply a system composed of a base-config and a test-config. Feel free to change the test config and restart
+
+(def app-config (merge base-config test-config))
+
 ; Return a function that listens to audio on the input stored in state
 
 (defmethod ig/init-key :blah/start [_ {:keys [state xform]}]
@@ -95,9 +47,9 @@
 
 ; The data handler is called as audio data becomes available on the blah session
 
-(defmethod ig/init-key :blah/data [_ {:keys [state map-fn]}]
+(defmethod ig/init-key :blah/data [_ {:keys [state update-fn]}]
   (fn [data]
-    (swap! state #(update % :data into (map map-fn data)))))
+    (swap! state #(update % :data update-fn data))))
 
 ; We will store sample frames inside of the blah state. This will be useful for manipulating, visualizing, playing collected audio
 
@@ -181,8 +133,8 @@
      start-button
      EventType.CLICK
      (fn []
-       (disable-elements inputs start-button)
-       (enable-elements stop-button)
+       (ui/disable-elements inputs start-button)
+       (ui/enable-elements stop-button)
        (let [session (start)
              context (blah/audio-context session)]
 
@@ -197,8 +149,8 @@
            (let [audio-data (a/<! session)]
              (if-not audio-data ;; No audio data means we are done or a user did not give permission
                (do
-                 (enable-elements inputs start-button)
-                 (disable-elements stop-button))
+                 (ui/enable-elements inputs start-button)
+                 (ui/disable-elements stop-button))
                (do
                  (data audio-data)
                  (recur))))))))
