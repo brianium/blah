@@ -90,8 +90,8 @@ cljs.spec.alpha.def_impl(cljs.core.cst$sym$blah$core_SLASH_audio_DASH_context,cl
  * ```
  */
 blah.core.listen = (function blah$core$listen(var_args){
-var G__2751 = arguments.length;
-switch (G__2751) {
+var G__2774 = arguments.length;
+switch (G__2774) {
 case 3:
 return blah.core.listen.cljs$core$IFn$_invoke$arity$3((arguments[(0)]),(arguments[(1)]),(arguments[(2)]));
 
