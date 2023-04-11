@@ -1,7 +1,6 @@
 {:paths   ["src"]
  :version "1.0.7"
- :deps    {org.clojure/clojurescript {:mvn/version "1.11.4"}
-           org.clojure/core.async    {:mvn/version "1.5.648"}}
+ :deps    {org.clojure/core.async {:mvn/version "1.5.648"}}
  :aliases {:build  {:deps       {io.github.clojure/tools.build {:git/tag "v0.7.2"
                                                                 :git/sha "0361dde"}}
                     :ns-default build}
@@ -13,7 +12,8 @@
                                  :pom-file  "target/classes/META-INF/maven/com.github.brianium/blah/pom.xml"}}
            
            :dev    {:extra-paths ["dev"]
-                    :extra-deps  {integrant/integrant {:mvn/version "0.8.0"}}}
+                    :extra-deps  {org.clojure/clojurescript {:mvn/version "1.11.4"}
+                                  integrant/integrant       {:mvn/version "0.8.0"}}}
            
            :format {:extra-deps {cljfmt/cljfmt {:mvn/version "0.8.0"}}
                     :main-opts  ["-m" "cljfmt.main"]}}}
