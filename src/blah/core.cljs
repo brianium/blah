@@ -6,19 +6,13 @@
    
    blah's main purpose is to produce a cljs.core.async channel
    of audio data (presumably from a user's microphone)."
-  (:require [blah.impl :as impl]
-            [blah.spec :as blah.spec]
-            [cljs.spec.alpha :as s]))
+  (:require [blah.impl :as impl]))
 
 (defn query-inputs
   "Query for audio inputs. Calls fn-1 with a sequence
    of inputs."
   [fn-1]
   (impl/query-inputs fn-1))
-
-(s/fdef query-inputs
-  :args (s/cat :fn-1 ::blah.spec/query-input-handler)
-  :ret  any?)
 
 (defn input-ch
   "Returns a channel that receives a sequence of inputs whenever there
@@ -40,10 +34,6 @@
   []
   (impl/input-ch))
 
-(s/fdef input-ch
-  :args (s/cat :close-ch (s/? ::blah.spec/write-port))
-  :ret  ::blah.spec/read-port)
-
 (defn audio-context
   "Returns a session's underlying AudioContext object.
    
@@ -59,10 +49,6 @@
    A typical use case might be wanting to play some audio back to a user after recording them."
   [session]
   (impl/audio-context session))
-
-(s/fdef audio-context
-  :args (s/cat :session ::blah.spec/session)
-  :ret  ::blah.spec/audio-context)
 
 (defn listen
   "Initiates a blah session.
@@ -108,15 +94,6 @@
   ([]
    (impl/listen)))
 
-;;; I have no idea how to spec a transducer
-
-(s/fdef listen
-  :args (s/alt :null   (s/cat)
-               :unary  (s/cat :input (s/nilable ::blah.spec/input))
-               :binary (s/cat :input (s/nilable ::blah.spec/input) :xform any?)
-               :all    (s/cat :input (s/nilable ::blah.spec/input) :xform any? :ex-handler fn?))
-  :ret  ::blah.spec/session)
-
 (defn request-permission
   "A utility for preemptively asking for access to the microphone.
    
@@ -130,7 +107,3 @@
    ```"
   []
   (impl/request-permission))
-
-(s/fdef request-permission
-  :args (s/cat)
-  :ret  ::blah.spec/read-port)
